@@ -1,114 +1,64 @@
-from SQL_Schema import Table, Column, format_data
+from SQL.schema.schema import Table, Column, format_data
+import sqlite3
+import Parser.parser as pars
 
-#db = Database("test.db")
-#
-#categories = Table("Categories")
-#
-#categories.add_column(
-#    Column(
-#        name="id",
-#        type="INTEGER",
-#        primary=True,
-#        autoincrement=True
-#    )
-#)
-#
-#categories.add_column(
-#    Column(
-#        name="name",
-#        type="TEXT",
-#        not_null=True,
-#        unique=True
-#    )
-#)
-#
-#db.execute(categories.create_sql())
-#
-#sql, params = categories.insert_sql({
-#    "name": "sci-fi"
-#})
-#
-#books = Table("Books")
-#
-#books.add_column(
-#    Column("id", "INTEGER", primary=True, autoincrement=True)
-#)
-#
-#books.add_column(
-#    Column("title", "TEXT", not_null=True)
-#)
-#
-#books.add_column(
-#    Column("category_id", "INTEGER", not_null=True)
-#)
-#
-#books.add_foreign_key(
-#    ForeignKey("category_id", "Categories", "id")
-#)
-#
-#db.execute(books.create_sql())
-#
-#category_id = db.get_or_create(
-#    table="Categories",
-#    key_column="name",
-#    value="sci-fi"
-#)
-#
-#sql, params = books.insert_sql({
-#    "title": "Dune",
-#    "category_id": category_id
-#})
-#
-#db.execute(sql, params)
+schema = pars.retrieve_schema("data/init.json")
 
-column = Column(
-    name = "Test",
-    type = "INTEGER",
-    autoincrement=True
-)
+#print(schema)
 
-column2 = Column(
-    name="Test2",
-    type="TEXT",
-    not_null=True
-)
+tags = pars.get_table_from_json(schema, "Tags")
+#print(tags.sql_create())
 
-columns = [
-    column,
-    column2
-]
+books = pars.get_table_from_json(schema, "Books")
+#print(books.sql_create())
 
-print(column.to_sql())
+book_tags = pars.get_table_from_json(schema, "BookTags")
+#print(book_tags.sql_create())
 
-table = Table(
-    name="TestTable",
-    columns=[column, column2]
-)
+conn = sqlite3.connect(":memory:")
+cur = conn.cursor()
 
-print(table.sql_create())
+cur.execute(books.sql_create())
+cur.execute(tags.sql_create())
+cur.execute(book_tags.sql_create())
 
-for p in table.columns:
-    print(p.name)
+conn.commit()
+
+book_data = format_data({
+    "name": "Alice in Wonderland",
+    "author": "Lewis Carroll",
+    "publish_date": "1865",
+    "category": "Fantasy"
+})
+
+sql, params = books.sql_insert(book_data)
+cur.execute(sql, params)
+book_id = cur.lastrowid
+
+Alice_id = books.get_id(conn, "name", "Alice in Wonderland")
+print(Alice_id)
+
+tag_names = ["youth", "adventure", "mystical"]
+tag_ids = []
+
+for tag in tag_names:
+    tag_id = tags.get_or_create(conn, "name", tag)
+    tag_ids.append(tag_id)
     
-raw = {
-    column.name: "First Column",
-    column2.name: "Second Column"
-}
+for tag_id in tag_ids:
+    sql, params = book_tags.sql_insert({
+        "book_id": book_id,
+        "tag_id": tag_id
+    })
+    cur.execute(sql, params)
 
-column3 = Column(
-    name="Test3",
-    type="TEXT",
-    not_null=True
-)
+conn.commit()
 
-raw[column3.name] = "Third Column"
+cur.execute("""
+    SELECT Tags.name
+    FROM Tags
+    JOIN BookTags ON Tags.id = BookTags.tag_id
+    WHERE BookTags.book_id = ?
+""", (book_id,))
 
-data = format_data(raw)
-
-print(f"{data}")
-
-sql, params = table.sql_insert(data)
-#cursor.execute(sql, params)
-
-print(f"{sql}")
-print(f"{params}")
+print([row[0] for row in cur.fetchall()])

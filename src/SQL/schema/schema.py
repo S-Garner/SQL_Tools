@@ -45,7 +45,12 @@ class Table:
         self.name = name
         self.columns = columns
         
-    def sql_create(self):
+    def sql_create(self) -> str:
+        """ Generate a CREATE TABLE statement for schema
+
+        Returns:
+            str: Returns a string that is an SQL create table command
+        """
         create_table = [
             f"CREATE TABLE {self.name} ("
         ]
@@ -59,6 +64,17 @@ class Table:
         return "\n".join(create_table)
     
     def sql_add_column(self, column: Column):
+        """Generate SQL to alter an existing table
+
+        Args:
+            column (Column): The column to be added
+
+        Raises:
+            ValueError: If column already exists
+
+        Returns:
+            str: A string SQL command to alter table
+        """
         if column.name in {c.name for c in self.columns}:
             raise ValueError("Column already exists")
 
@@ -83,6 +99,29 @@ class Table:
         )
 
         return sql, params
+    
+    def get_id(self, conn, column_name: str, value):
+        if column_name not in {c.name for c in self.columns}:
+            raise ValueError(f"Unknown column: {column_name}")
+
+        sql = f"SELECT id FROM {self.name} WHERE {column_name} = ?;"
+        cur = conn.execute(sql, (value,))
+        row = cur.fetchone()
+
+        if row is None:
+            return None
+
+        return row[0]
+    
+    def get_or_create(self, conn, column_name: str, value):
+        existing_id = self.get_id(conn, column_name, value)
+        if existing_id is not None:
+            return existing_id
+
+        sql, params = self.sql_insert({column_name: value})
+        cur = conn.execute(sql, params)
+        conn.commit()
+        return cur.lastrowid
     
 
 def format_data(data: dict):

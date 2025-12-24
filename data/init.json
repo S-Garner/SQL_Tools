@@ -1,0 +1,17 @@
+{
+    "tables": [
+        { "type": "Table", "name": "Books", "columns": [
+              { "name": "id",           "type": "INTEGER",  "primary": true, "autoincrement": true },
+              { "name": "name",         "type": "TEXT",     "not_null": true },
+              { "name": "author",       "type": "TEXT" },
+              { "name": "publish_date", "type": "TEXT" },
+              { "name": "category",     "type": "TEXT" }]},
+        { "type": "Table", "name": "Tags", "columns": [
+            { "name": "id",             "type": "INTEGER", "primary": true, "autoincrement": true},
+            { "name": "name",           "type": "TEXT",    "not_null": true, "unique": true}]},
+        { "type": "Table", "name": "BookTags", "columns": [
+            { "name": "book_id",        "type": "INTEGER", "not_null": true},
+            { "name": "tag_id",         "type": "INTEGER", "not_null": true}]
+        }    
+    ]
+}
