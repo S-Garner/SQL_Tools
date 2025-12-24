@@ -100,12 +100,12 @@ class Table:
 
         return sql, params
     
-    def get_id(self, conn, column_name: str, value):
+    def get_id(self, conn, column_name: str, column_value):
         if column_name not in {c.name for c in self.columns}:
             raise ValueError(f"Unknown column: {column_name}")
 
         sql = f"SELECT id FROM {self.name} WHERE {column_name} = ?;"
-        cur = conn.execute(sql, (value,))
+        cur = conn.execute(sql, (column_value,))
         row = cur.fetchone()
 
         if row is None:
@@ -123,6 +123,18 @@ class Table:
         conn.commit()
         return cur.lastrowid
     
+    def get_column_from_table(self, name: str) -> Column:
+        for column in self.columns:
+            if column.name == name:
+                return column
+        raise ValueError(f"Column '{name}' not found in table '{table.name}'")
+    
 
-def format_data(data: dict):
-    return {k: v for k, v in data.items() if v is not None}
+def format_data(data: dict) -> dict:
+    formatted = {}
+
+    for key, value in data.items():
+        if value is not None:
+            formatted[key] = value
+
+    return formatted
