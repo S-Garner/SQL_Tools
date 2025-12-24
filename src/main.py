@@ -42,14 +42,14 @@ sql, params = tBooks.sql_insert(eAlice)
 cur.execute(sql, params)
 book_id = cur.lastrowid
 
-Alice_id = tBooks.get_id(conn, "name", "Alice in Wonderland")
+Alice_id = que.get_id(tBooks, conn, "name", "Alice in Wonderland")
 print(Alice_id)
 
 tag_names = ["youth", "adventure", "mystical"]
 tag_ids = []
 
 for tag in tag_names:
-    tag_id = tTags.get_or_create(conn, "name", tag)
+    tag_id = que.get_or_create(tTags, conn, "name", tag)
     tag_ids.append(tag_id)
     
 for tag_id in tag_ids:
