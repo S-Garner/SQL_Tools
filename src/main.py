@@ -1,4 +1,4 @@
-from SQL.schema.schema import Table, Column, format_data
+from SQL.schema.schema import Table, Column, format_data, MTM
 import sqlite3
 import Parser.parser as pars
 import SQL.Query.query as que
@@ -16,6 +16,10 @@ tBooks = pars.get_table_from_json(schema, "Books")
 cAuthor_column = tBooks.get_column_from_table("author")
 print(cAuthor_column.name, "column name")
 print(cAuthor_column.type, "column type")
+
+cBook_id = tBooks.get_column_from_table("id")
+print(cBook_id.name, "column name")
+print(cBook_id.type, "column type")
 
 tBook_tags = pars.get_table_from_json(schema, "BookTags")
 #print(book_tags.sql_create())
@@ -51,15 +55,21 @@ tag_ids = []
 for tag in tag_names:
     tag_id = que.get_or_create(tTags, conn, "name", tag)
     tag_ids.append(tag_id)
-    
-for tag_id in tag_ids:
-    sql, params = tBook_tags.sql_insert({
-        "book_id": book_id,
-        "tag_id": tag_id
-    })
-    cur.execute(sql, params)
 
-conn.commit()
+cBook_fk = tBook_tags.get_column_from_table("book_id")
+cTag_fk = tBook_tags.get_column_from_table("tag_id")
+
+mtm_book_tags = MTM(
+    join_table=tBook_tags,
+    left_fk=cBook_fk.name,
+    right_fk=cTag_fk.name
+)
+
+mtm_book_tags.insert_many(
+    conn,
+    left_ids=[book_id],
+    right_ids=tag_ids
+)
 
 print(que.get_value(conn=conn,
                     table=tBooks,

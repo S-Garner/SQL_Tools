@@ -1,4 +1,4 @@
-        
+
 import sqlite3
 
 class Column:
@@ -138,3 +138,32 @@ def format_data(data: dict) -> dict:
             formatted[key] = value
 
     return formatted
+
+class MTM:
+    def __init__(
+        self,
+        join_table: Table,
+        left_fk: str,
+        right_fk: str,
+    ):
+        self.join_table = join_table
+        self.left_fk = left_fk
+        self.right_fk = right_fk
+        
+    def insert_many(
+        self,
+        conn,
+        left_ids: list[int],
+        right_ids: list[int],
+    ):
+        cur = conn.cursor()
+
+        for left_id in left_ids:
+            for right_id in right_ids:
+                sql, params = self.join_table.sql_insert({
+                    self.left_fk: left_id,
+                    self.right_fk: right_id,
+                })
+                cur.execute(sql, params)
+
+        conn.commit()               
