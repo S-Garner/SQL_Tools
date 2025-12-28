@@ -1,4 +1,7 @@
 from SQL.schema.schema import Table, Column, format_data
+from sqlite3 import Cursor
+
+from datetime import date
 
 def get_value(conn, table: Table, column_name: str, row_id):
     if column_name not in {c.name for c in table.columns}:
@@ -34,4 +37,16 @@ def get_or_create(table, conn, column_name: str, value):
     sql, params = table.sql_insert({column_name: value})
     cur = conn.execute(sql, params)
     conn.commit()
+    return cur.lastrowid
+
+def insert_entry(cur: Cursor, table: Table, data: dict):
+    if table.get_column_from_table("CREATE_DATE"):
+        today = date.today()
+        data["CREATE_DATE"] = today
+        print("IT WORKED")
+        
+    sql, params = table.sql_insert(data)
+    
+    cur.execute(sql, params)
+    
     return cur.lastrowid

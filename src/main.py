@@ -27,9 +27,9 @@ tBook_tags = pars.get_table_from_json(schema, "BookTags")
 conn = sqlite3.connect(":memory:")
 cur = conn.cursor()
 
-cur.execute(tBooks.sql_create())
-cur.execute(tTags.sql_create())
-cur.execute(tBook_tags.sql_create())
+cur.execute(tBooks.sql_create_table())
+cur.execute(tTags.sql_create_table())
+cur.execute(tBook_tags.sql_create_table())
 
 conn.commit()
 
@@ -42,9 +42,7 @@ eAlice = format_data({
 
 print(eAlice["name"], "Entry name")
 
-sql, params = tBooks.sql_insert(eAlice)
-cur.execute(sql, params)
-book_id = cur.lastrowid
+book_id = que.insert_entry(cur, tBooks, eAlice)
 
 Alice_id = que.get_id(tBooks, conn, "name", "Alice in Wonderland")
 print(Alice_id)

@@ -45,7 +45,7 @@ class Table:
         self.name = name
         self.columns = columns
         
-    def sql_create(self) -> str:
+    def sql_create_table(self) -> str:
         """ Generate a CREATE TABLE statement for schema
 
         Returns:
@@ -127,7 +127,8 @@ class Table:
         for column in self.columns:
             if column.name == name:
                 return column
-        raise ValueError(f"Column '{name}' not found in table '{table.name}'")
+        
+        return None
     
 
 def format_data(data: dict) -> dict:
